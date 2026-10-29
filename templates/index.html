@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPL 2026 Analytics Hub</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --accent: #FFD700;
+            --accent-dim: rgba(255,215,0,0.15);
+            --glass-bg: rgba(255,255,255,0.05);
+            --glass-border: rgba(255,255,255,0.10);
+            --text-muted: rgba(255,255,255,0.55);
+            --radius-lg: 24px;
+            --radius-md: 14px;
+            --radius-sm: 10px;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: #0f0c29;
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: background 0.9s ease;
+        }
+
+        /* ── Header ─────────────────────────────────────────── */
+        header {
+            width: 100%;
+            padding: 28px 40px 0;
+            text-align: center;
+        }
+
+        .logo-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            margin-bottom: 6px;
+        }
+
+        .logo-icon { font-size: 36px; }
+
+        h1 {
+            font-size: clamp(22px, 4vw, 34px);
+            font-weight: 700;
+            letter-spacing: 3px;
+            background: linear-gradient(135deg, #fff 30%, #FFD700 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tagline {
+            font-size: 13px;
+            color: var(--text-muted);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 28px;
+        }
+
+        /* ── Selector ───────────────────────────────────────── */
+        .selector-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 36px;
+        }
+
+        select {
+            padding: 12px 20px;
+            border-radius: var(--radius-md);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            font-size: 15px;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.3s;
+            min-width: 220px;
+        }
+        select:hover { background: rgba(255,255,255,0.10); }
+        select option { background: #1a1740; color: white; }
+        optgroup { color: var(--accent); font-weight: 600; }
+
+        /* ── Main grid ──────────────────────────────────────── */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 22px;
+            width: min(1100px, 96vw);
+            padding-bottom: 40px;
+        }
+
+        /* ── Glass card ─────────────────────────────────────── */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+        }
+
+        /* ── Player profile card ────────────────────────────── */
+        .profile-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+        }
+
+        .avatar-ring {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #ff6b35);
+            padding: 3px;
+            margin-bottom: 18px;
+            box-shadow: 0 0 40px rgba(255,215,0,0.25);
+            flex-shrink: 0;
+        }
+
+        #player-img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            object-position: top center;
+            display: block;
+            background: #1a1740;
+        }
+
+        .team-badge {
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            background: var(--accent);
+            color: #0f0c29;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 20px;
+            letter-spacing: 1px;
+        }
+
+        #player-name {
+            font-size: 22px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 4px;
+        }
+
+        #player-role {
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent);
+            margin-bottom: 14px;
+        }
+
+        .flag-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 22px;
+        }
+
+        /* ── Impact score ──────────────────────────────────── */
+        .impact-block {
+            width: 100%;
+            background: rgba(255,215,0,0.08);
+            border: 1px solid rgba(255,215,0,0.25);
+            border-radius: var(--radius-md);
+            padding: 14px 18px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .impact-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+        .impact-value {
+            font-size: 42px;
+            font-weight: 700;
+            color: var(--accent);
+            line-height: 1;
+        }
+        .impact-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+        /* ── Stats grid ─────────────────────────────────────── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            padding: 12px 10px;
+            text-align: center;
+        }
+        .stat-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+        }
+        .stat-value.highlight { color: var(--accent); }
+
+        /* ── Bio ─────────────────────────────────────────────── */
+        .bio-box {
+            width: 100%;
+            background: rgba(255,255,255,0.03);
+            border-left: 3px solid var(--accent);
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            padding: 12px 14px;
+            font-size: 12.5px;
+            line-height: 1.65;
+            color: rgba(255,255,255,0.72);
+        }
+
+        /* ── Right panel ─────────────────────────────────────── */
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        .chart-card { min-height: 380px; }
+
+        #chart { width: 100%; height: 360px; }
+
+        /* ── Progress bars ───────────────────────────────────── */
+        .bars-card { }
+
+        .bar-section-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+
+        .bar-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .bar-label {
+            width: 80px;
+            font-size: 12px;
+            color: var(--text-muted);
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .bar-track {
+            flex: 1;
+            height: 8px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 99px;
+            overflow: hidden;
+        }
+        .bar-fill {
+            height: 100%;
+            border-radius: 99px;
+            transition: width 0.7s cubic-bezier(0.4,0,0.2,1);
+        }
+        .bar-val {
+            width: 36px;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: right;
+            color: white;
+        }
+
+        /* ── Empty state ─────────────────────────────────────── */
+        #empty-state {
+            grid-column: 1 / -1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 380px;
+            gap: 16px;
+            color: var(--text-muted);
+        }
+        .empty-icon { font-size: 64px; opacity: 0.4; }
+        .empty-text { font-size: 18px; }
+
+        /* ── Responsive ──────────────────────────────────────── */
+        @media (max-width: 780px) {
+            .main-grid { grid-template-columns: 1fr; }
+            .profile-card { flex-direction: row; flex-wrap: wrap; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-row">
+            <span class="logo-icon">🏏</span>
+            <h1>IPL 2026 PLAYER HUB</h1>
+        </div>
+        <p class="tagline">Advanced Cricket Analytics Dashboard</p>
+    </header>
+
+    <div class="selector-wrap">
+        <select id="player-selector">
+            <option value="">— Choose a Superstar —</option>
+            {% for team, players in teams.items() %}
+            <optgroup label="{{ team }}">
+                {% for player in players %}
+                <option value="{{ player }}">{{ player }}</option>
+                {% endfor %}
+            </optgroup>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- EMPTY STATE -->
+    <div class="main-grid" id="empty-state-wrap">
+        <div id="empty-state" class="glass">
+            <div class="empty-icon">🏆</div>
+            <div class="empty-text">Select a player to view their analytics</div>
+        </div>
+    </div>
+
+    <!-- PLAYER CONTENT (hidden until selection) -->
+    <div class="main-grid" id="player-content" style="display:none;">
+
+        <!-- Left: Profile Card -->
+        <div class="glass profile-card" id="profile-card">
+            <div class="avatar-ring">
+                <img id="player-img" src="" alt="Player" onerror="this.src='/static/images/players/placeholder.png'">
+                <span class="team-badge" id="team-badge">—</span>
+            </div>
+            <div id="player-name">—</div>
+            <div id="player-role">—</div>
+            <div class="flag-row">
+                <span id="player-flag">🌍</span>
+                <span id="player-nationality">—</span>
+            </div>
+
+            <div class="impact-block">
+                <div class="impact-label">Impact Score</div>
+                <div class="impact-value" id="impact-score">—</div>
+                <div class="impact-sub">Weighted Performance Index</div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-label">Matches</div>
+                    <div class="stat-value highlight" id="stat-matches">—</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Bat Avg</div>
+                    <div class="stat-value" id="stat-avg">—</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Strike Rate</div>
+                    <div class="stat-value highlight" id="stat-sr">—</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Wickets</div>
+                    <div class="stat-value" id="stat-wickets">—</div>
+                </div>
+            </div>
+
+            <div class="bio-box" id="player-bio">—</div>
+        </div>
+
+        <!-- Right: Charts + Bars -->
+        <div class="right-panel">
+
+            <div class="glass chart-card">
+                <div id="chart"></div>
+            </div>
+
+            <div class="glass bars-card">
+                <div class="bar-section-title">Performance Breakdown</div>
+
+                <div class="bar-row">
+                    <div class="bar-label">Demand</div>
+                    <div class="bar-track">
+                        <div class="bar-fill" id="bar-demand" style="width:0%;background:linear-gradient(90deg,#FFD700,#FFA500);"></div>
+                    </div>
+                    <div class="bar-val" id="bv-demand">—</div>
+                </div>
+
+                <div class="bar-row">
+                    <div class="bar-label">Hype</div>
+                    <div class="bar-track">
+                        <div class="bar-fill" id="bar-hype" style="width:0%;background:linear-gradient(90deg,#FF4B4B,#FF6B6B);"></div>
+                    </div>
+                    <div class="bar-val" id="bv-hype">—</div>
+                </div>
+
+                <div class="bar-row">
+                    <div class="bar-label">Strike Rate</div>
+                    <div class="bar-track">
+                        <div class="bar-fill" id="bar-sr" style="width:0%;background:linear-gradient(90deg,#00D2FF,#7B2FBE);"></div>
+                    </div>
+                    <div class="bar-val" id="bv-sr">—</div>
+                </div>
+
+                <div class="bar-row">
+                    <div class="bar-label">Bat Avg</div>
+                    <div class="bar-track">
+                        <div class="bar-fill" id="bar-avg" style="width:0%;background:linear-gradient(90deg,#43e97b,#38f9d7);"></div>
+                    </div>
+                    <div class="bar-val" id="bv-avg">—</div>
+                </div>
+
+                <div class="bar-row">
+                    <div class="bar-label">Impact</div>
+                    <div class="bar-track">
+                        <div class="bar-fill" id="bar-impact" style="width:0%;background:linear-gradient(90deg,#f093fb,#f5576c);"></div>
+                    </div>
+                    <div class="bar-val" id="bv-impact">—</div>
+                </div>
+            </div>
+
+        </div><!-- /right-panel -->
+    </div><!-- /main-grid -->
+
+    <script>
+        // nationality → flag emoji
+        const flagMap = {
+            'Indian': '🇮🇳', 'Australian': '🇦🇺', 'English': '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
+            'South African': '🇿🇦', 'West Indian': '🏝️', 'New Zealander': '🇳🇿',
+            'Sri Lankan': '🇱🇰', 'Bangladeshi': '🇧🇩', 'Afghan': '🇦🇫',
+            'Pakistani': '🇵🇰', 'Trinidadian': '🇹🇹',
+        };
+
+        const teamColors = {
+            "RCB":  { glow: "#d41111", grad: "radial-gradient(circle at 20% 50%, #6b0000 0%, #0f0c29 70%)" },
+            "CSK":  { glow: "#fdb913", grad: "radial-gradient(circle at 20% 50%, #7a5800 0%, #0f0c29 70%)" },
+            "MI":   { glow: "#004ba0", grad: "radial-gradient(circle at 20% 50%, #002460 0%, #0f0c29 70%)" },
+            "KKR":  { glow: "#3a225d", grad: "radial-gradient(circle at 20% 50%, #1e0e40 0%, #0f0c29 70%)" },
+            "SRH":  { glow: "#ff822a", grad: "radial-gradient(circle at 20% 50%, #7a3600 0%, #0f0c29 70%)" },
+            "GT":   { glow: "#1c2d5e", grad: "radial-gradient(circle at 20% 50%, #0a1628 0%, #0f0c29 70%)" },
+            "LSG":  { glow: "#00bfff", grad: "radial-gradient(circle at 20% 50%, #003f5c 0%, #0f0c29 70%)" },
+            "DC":   { glow: "#00008b", grad: "radial-gradient(circle at 20% 50%, #00004a 0%, #0f0c29 70%)" },
+            "RR":   { glow: "#ea1b85", grad: "radial-gradient(circle at 20% 50%, #5c0035 0%, #0f0c29 70%)" },
+            "PBKS": { glow: "#ed1b24", grad: "radial-gradient(circle at 20% 50%, #6b0005 0%, #0f0c29 70%)" },
+        };
+
+        function setBar(barId, valId, pct, raw) {
+            setTimeout(() => { document.getElementById(barId).style.width = pct + '%'; }, 60);
+            document.getElementById(valId).textContent = raw;
+        }
+
+        $('#player-selector').on('change', function () {
+            const player = $(this).val();
+            if (!player) return;
+
+            $.getJSON('/get_player_data/' + encodeURIComponent(player), function (d) {
+                // Show content
+                $('#empty-state-wrap').hide();
+                $('#player-content').fadeIn(400);
+
+                // ── Chart ──────────────────────────────
+                const graphs = JSON.parse(d.graph);
+                Plotly.react('chart', graphs.data, graphs.layout, { displayModeBar: false, responsive: true });
+
+                // ── Profile ────────────────────────────
+                $('#player-img').attr('src', d.image);
+                $('#player-name').text(player);
+                $('#player-role').text(d.role);
+                $('#team-badge').text(d.team);
+                $('#impact-score').text(d.impact_score);
+                $('#player-nationality').text(d.nationality);
+                $('#player-flag').text(flagMap[d.nationality] || '🌍');
+                $('#player-bio').text(d.bio);
+
+                // ── Stats boxes ────────────────────────
+                $('#stat-matches').text(d.matches);
+                $('#stat-avg').text(d.batting_avg.toFixed(1));
+                $('#stat-sr').text(d.sr);
+                $('#stat-wickets').text(d.wickets);
+
+                // ── Progress bars ──────────────────────
+                // Normalise strike rate (max ~200) and avg (max ~60)
+                const srPct  = Math.min(Math.round(d.sr / 2), 100);
+                const avgPct = Math.min(Math.round(d.batting_avg / 0.6), 100);
+                setBar('bar-demand', 'bv-demand', d.demand,       d.demand);
+                setBar('bar-hype',   'bv-hype',   d.hype,         d.hype);
+                setBar('bar-sr',     'bv-sr',     srPct,          d.sr);
+                setBar('bar-avg',    'bv-avg',    avgPct,         d.batting_avg.toFixed(1));
+                setBar('bar-impact', 'bv-impact', d.impact_score, d.impact_score);
+
+                // ── Avatar ring glow ───────────────────
+                const tc = teamColors[d.team] || { glow: '#FFD700', grad: 'radial-gradient(circle at 20% 50%, #1a1740 0%, #0f0c29 70%)' };
+                $('body').css('background', tc.grad);
+                $('.avatar-ring').css('background', `linear-gradient(135deg, ${tc.glow}, #ff6b35)`);
+                $('.avatar-ring').css('box-shadow', `0 0 50px ${tc.glow}55`);
+                $('#player-role').css('color', tc.glow);
+                $('.impact-block').css('border-color', tc.glow + '55');
+                $('.impact-value').css('color', tc.glow);
+            }).fail(function() {
+                console.error('Failed to load player data');
+            });
+        });
+    </script>
+</body>
+</html>
